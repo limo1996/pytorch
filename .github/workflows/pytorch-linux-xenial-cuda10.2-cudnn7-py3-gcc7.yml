@@ -2,11 +2,11 @@
 #
 # Template is at:    .github/templates/linux_ci_workflow.yml
 # Generation script: .github/scripts/generate_linux_ci_workflows.py
-name: Linux CI (!{{ build_environment }})
+name: Linux CI (pytorch-linux-xenial-cuda10.2-cudnn7-py3-gcc7)
 
 on:
   # TODO: Enable pull_request builds when we can verify capacity can be met by auto-scalers
-!{{ on_pull_request }}
+
   push:
     branches:
       - master
@@ -14,8 +14,8 @@ on:
   workflow_dispatch:
 
 env:
-  BUILD_ENVIRONMENT: !{{ build_environment }}
-  DOCKER_IMAGE_BASE: !{{ docker_image_base }}
+  BUILD_ENVIRONMENT: pytorch-linux-xenial-cuda10.2-cudnn7-py3-gcc7
+  DOCKER_IMAGE_BASE: 308535385114.dkr.ecr.us-east-1.amazonaws.com/pytorch/pytorch-linux-xenial-cuda10.2-cudnn7-py3-gcc7
   SCCACHE_BUCKET: ossci-compiler-cache-circleci-v2
   TORCH_CUDA_ARCH_LIST: 5.2
   IN_CI: 1
@@ -108,7 +108,7 @@ jobs:
           # Prune all of the docker images
           docker system prune -af
   test:
-    runs-on: !{{ test_runner_type }}
+    runs-on: linux.8xlarge.nvidia.gpu
     needs:
       - calculate-docker-image
       - build
