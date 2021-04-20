@@ -34,21 +34,41 @@ bool isCustomClass(const c10::IValue& v) {
       getCustomClass(v.toObject()->type()->name()->qualifiedName());
 }
 
-std::vector<std::unique_ptr<jit::Function>>& customClassMethods() {
-  static std::vector<std::unique_ptr<jit::Function>> customClassMethods;
+using MethodOverloadsList = std::vector<std::unique_ptr<jit::Function>>;
+using MethodMap = std::unordered_map<std::string, MethodOverloadsList>;
+
+MethodMap& customClassMethods() {
+  static MethodMap customClassMethods;
   return customClassMethods;
 }
 
 void registerCustomClassMethod(std::unique_ptr<jit::Function> fn) {
-  customClassMethods().emplace_back(std::move(fn));
+  auto& custom_class_methods = customClassMethods();
+
+  // check if the method is already registered
+  for (auto& methods : custom_class_methods) {
+    for (auto& method_it : methods.second) {
+      if (method_it == fn) {
+        return;
+      }
+    }
+  }
+
+  auto it =
+      custom_class_methods.insert(std::pair<std::string, MethodOverloadsList>(
+          fn->name(), MethodOverloadsList()));
+  it.first->second.push_back(std::move(fn));
 }
 
 std::vector<c10::FunctionSchema> customClassSchemasForBCCheck() {
-    auto& methods = customClassMethods();
-    return c10::fmap(methods, [](const std::unique_ptr<jit::Function>& fn) {
-      return fn->getSchema();
-    });
+  auto& MethodMap = customClassMethods();
+  std::vector<c10::FunctionSchema> schemas;
+  for (auto& methods : MethodMap) {
+    for (auto& method_it : methods.second) {
+      schemas.push_back(method_it.get()->getSchema());
+    }
+  }
+  return schemas;
 }
-
 
 } // namespace torch

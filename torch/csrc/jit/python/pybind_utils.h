@@ -29,6 +29,7 @@
 #include <torch/csrc/distributed/rpc/py_rref.h>
 #include <torch/csrc/distributed/rpc/rref_impl.h>
 #endif
+#include <torch/library.h>
 
 #include <ATen/core/function_schema.h>
 #include <c10/core/Stream.h>
@@ -55,6 +56,16 @@
 
 namespace torch {
 namespace jit {
+
+// NB: Need VISIBILITY_HIDDEN for silencing compiler error
+struct VISIBILITY_HIDDEN PythonArguments {
+  PythonArguments(
+      const struct tuple_slice& args_,
+      const pybind11::kwargs& kwargs_)
+      : args(args_), kwargs(kwargs_) {}
+  const struct tuple_slice& args;
+  const pybind11::kwargs& kwargs;
+};
 
 void clear_registered_instances(void* ptr);
 
